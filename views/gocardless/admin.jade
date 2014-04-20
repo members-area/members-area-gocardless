@@ -1,0 +1,30 @@
+extends /sidebar
+
+mixin formatInput(name, label, placeholder, type)
+  - type = type || "text"
+  .control-group
+    label.control-label(for=name)= label
+    .controls
+      if type == "checkbox"
+        input(type=type, id=name, name=name, checked=data[name])
+      else
+        input(type=type, id=name, name=name, value=data[name], placeholder=placeholder)
+
+block title
+  | GoCardless
+
+block content
+  h2 GoCardless #{errorMessage}
+
+  form.form-horizontal(method="POST")
+    if errorMessage
+      p.text-error= errorMessage
+    +formatInput("sandbox", "Sandbox?", "", "checkbox")
+    +formatInput("appId", "App ID", "DUMMY_APP")
+    +formatInput("appSecret", "App Secret", "INSERT_APP_SECRET_HERE")
+    +formatInput("merchantId", "Merchant Id", "INSERT_MERCHANT_ID")
+    +formatInput("token", "Token", "INSERT_MERCHANT_ACCESS_TOKEN")
+
+    .control-group
+      .controls
+        button.btn-success(type="Submit") Save
