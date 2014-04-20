@@ -11,7 +11,7 @@ module.exports =
   modifyNavigationItems: ({addItem}) ->
     addItem 'admin',
       title: 'GoCardless'
-      id: 'members-area-gocardless-gocardless-admin'
+      id: 'members-area-gocardless-admin'
       href: '/admin/gocardless'
       permissions: ['admin']
       priority: 53

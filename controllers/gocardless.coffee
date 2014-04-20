@@ -5,6 +5,7 @@ class GoCardlessController extends LoggedInController
   @before 'requireAdmin'
   @before 'saveSettings', only: ['admin']
   @before 'getSubscriptions', only: ['subscriptions', 'bills']
+  @before 'setActiveNagivationId'
 
   admin: ->
 
@@ -59,5 +60,8 @@ class GoCardlessController extends LoggedInController
 
   client: ->
     @gocardlessClient ||= require('gocardless')(@plugin.get())
+
+  setActiveNagivationId: ->
+    @activeNavigationId = 'members-area-gocardless-admin'
 
 module.exports = GoCardlessController
