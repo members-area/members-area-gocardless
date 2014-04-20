@@ -26,3 +26,7 @@ block content
         each field in fields
           td= bill[field]
         td= (bill.subscription ? bill.subscription.name : "")
+
+  h3 Maintenance
+  form(method="post")
+    button.btn(type="submit", name="reprocess", value="1") Re-process all records
