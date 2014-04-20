@@ -7,6 +7,11 @@ class GoCardlessController extends LoggedInController
 
   admin: ->
 
+  subscriptions: (done) ->
+    @client().subscription.index (err, res, body) =>
+      @subscriptions = JSON.parse body
+      done()
+
   requireAdmin: (done) ->
     unless @req.user and @req.user.can('admin')
       err = new Error "Permission denied"
@@ -35,5 +40,8 @@ class GoCardlessController extends LoggedInController
     else
       @data = @plugin.get()
       done()
+
+  client: ->
+    @gocardlessClient ||= require('gocardless')(@plugin.get())
 
 module.exports = GoCardlessController

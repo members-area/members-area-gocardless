@@ -1,6 +1,7 @@
 module.exports =
   initialize: (done) ->
     @app.addRoute 'all', '/admin/gocardless', 'members-area-gocardless#gocardless#admin'
+    @app.addRoute 'all', '/admin/gocardless/subscriptions', 'members-area-gocardless#gocardless#subscriptions'
     @hook 'navigation_items', @modifyNavigationItems.bind(this)
 
     done()
