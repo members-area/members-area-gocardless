@@ -12,6 +12,16 @@ class GoCardlessController extends LoggedInController
       @subscriptions = JSON.parse body
       done()
 
+  payouts: (done) ->
+    @client().payout.index (err, res, body) =>
+      @payouts = JSON.parse body
+      done()
+
+  bills: (done) ->
+    @client().bill.index (err, res, body) =>
+      @bills = JSON.parse body
+      done()
+
   requireAdmin: (done) ->
     unless @req.user and @req.user.can('admin')
       err = new Error "Permission denied"

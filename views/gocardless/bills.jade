@@ -1,0 +1,26 @@
+extends /sidebar
+
+mixin formatInput(name, label, placeholder, type)
+  - type = type || "text"
+  .control-group
+    label.control-label(for=name)= label
+    .controls
+      if type == "checkbox"
+        input(type=type, id=name, name=name, checked=data[name])
+      else
+        input(type=type, id=name, name=name, value=data[name], placeholder=placeholder)
+
+block title
+  | GoCardless Bills
+
+block content
+  h2 GoCardless Bills
+  - var fields = ['created_at', 'source_type', 'source_id', 'amount_minus_fees', 'status']
+  table.table
+    tr
+      each field in fields
+        th= field
+    each bill in bills
+      tr
+        each field in fields
+          td= bill[field]
