@@ -4,22 +4,28 @@ async = require 'members-area/node_modules/async'
 class GoCardlessController extends LoggedInController
   @before 'requireAdmin'
   @before 'saveSettings', only: ['admin']
+  @before 'getSubscriptions', only: ['subscriptions', 'bills']
 
   admin: ->
 
-  subscriptions: (done) ->
-    @client().subscription.index (err, res, body) =>
-      @subscriptions = JSON.parse body
-      done()
+  subscriptions: ->
 
   payouts: (done) ->
     @client().payout.index (err, res, body) =>
-      @payouts = JSON.parse body
+      @payoutList = JSON.parse body
       done()
 
   bills: (done) ->
     @client().bill.index (err, res, body) =>
-      @bills = JSON.parse body
+      @billList = JSON.parse body
+      for bill in @billList when bill.source_type is 'subscription'
+        for subscription in @subscriptionList when subscription.id is bill.source_id
+          bill.subscription = subscription
+      done()
+
+  getSubscriptions: (done) ->
+    @client().subscription.index (err, res, body) =>
+      @subscriptionList = JSON.parse body
       done()
 
   requireAdmin: (done) ->

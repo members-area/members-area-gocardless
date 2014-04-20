@@ -20,7 +20,9 @@ block content
     tr
       each field in fields
         th= field
-    each bill in bills
+      th Subscription name
+    each bill in billList
       tr
         each field in fields
           td= bill[field]
+        td= (bill.subscription ? bill.subscription.name : "")
