@@ -54,6 +54,7 @@ class GoCardlessController extends LoggedInController
           throw err if err
           body = JSON.parse(body)
           throw new Error(body.error.join(" \n")) if body.error
+          @successMessage = "We checked with GoCardless and you've successfully identified as merchant #{data.merchantId} :)"
           @plugin.set data, done
         catch err
           console.dir err

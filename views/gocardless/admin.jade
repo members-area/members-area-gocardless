@@ -20,6 +20,8 @@ block content
   form.form-horizontal(method="POST")
     if errorMessage
       p.text-error= errorMessage
+    if successMessage
+      p.text-success= successMessage
     +formatInput("sandbox", "Sandbox?", "", "checkbox")
     +formatInput("appId", "App Identifier", "DUMMY_APP")
     +formatInput("appSecret", "App secret", "INSERT_APP_SECRET_HERE")
