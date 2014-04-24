@@ -13,11 +13,31 @@ module.exports =
     if paymentsPlugin
       SubscriptionController = require "#{paymentsPlugin.path}/controllers/subscription"
       self = this
-      setUpGocardlessPayments = (callback) ->
-        self.setUpGocardlessPayments(this, callback)
-      SubscriptionController.before setUpGocardlessPayments, only: ["view"]
+      wrapSelf = (fn) ->
+        (callback) ->
+          fn.call self, this, callback
+      SubscriptionController.before wrapSelf(@gocardlessPaymentsCallback), only: ["view"]
+      SubscriptionController.before wrapSelf(@setUpGocardlessPayments), only: ["view"]
 
     done()
+
+  gocardlessPaymentsCallback: (controller, callback) ->
+    loggedInUser = controller.loggedInUser
+
+    req = controller.req
+    if req.method is 'GET' and req.query.signature and req.query.resource_uri and req.query.resource_id and req.query.resource_type is "pre_authorization" and req.query.state is String(loggedInUser.id) and loggedInUser.meta.gocardless
+      # This looks like a valid gocardless callback!
+      gocardlessClient = require('gocardless')(@get())
+      gocardlessClient.confirmResource req.query, (err, request, body) ->
+        return callback err if err
+        # SUCCESS!
+        gocardless = loggedInUser.meta.gocardless ? {}
+        gocardless.resource_id = req.query.resource_id
+        loggedInUser.setMeta gocardless: gocardless
+        loggedInUser.save =>
+          callback()
+    else
+      return callback()
 
   setUpGocardlessPayments: (controller, callback) ->
     loggedInUser = controller.loggedInUser
@@ -90,6 +110,9 @@ module.exports =
         interval_unit: 'month'
         name: "M#{controller.res.locals.pad(loggedInUser.id, 6)}"
         description: "#{controller.app.siteSetting.meta.settings.name ? "Members Area"} subscription"
+        redirect_uri: "#{controller.baseURL()}/subscription"
+        cancel_uri: "#{controller.baseURL()}/subscription"
+        state: loggedInUser.id
         user:
           first_name: firstName
           last_name: lastName
