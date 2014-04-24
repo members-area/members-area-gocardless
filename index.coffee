@@ -148,6 +148,9 @@ module.exports =
       monthsOverdue++
       counter.setMonth(counter.getMonth() - 1)
 
+    isSetUp = controller.loggedInUser.meta.gocardless?.resource_id?
+    hideIfSetUp = " style='display:none'" if isSetUp
+    hideIfSetUp ?= ""
     $newNode = $ """
       <h3>GoCardless</h3>
       <p>
@@ -157,12 +160,16 @@ module.exports =
         very affordable.
       </p>
       <p class="text-info">GoCardless collect money via Direct Debit, and so your payments are covered by the Direct Debit Guarantee.</p>
+      """ + (if isSetUp then """
+      <p class="text-success">Thank you for setting up a GoCardless subscription; you can edit the amount below.</p>
+      """ else """
       <p>To get started, just enter your preferred monthly payment amount below:</p>
+      """) + """
       <form method="POST" action="">
         <input type="hidden" name="form" value="gocardless">
         <table style="width:auto" class="table table-bordered">
           <tbody>
-            <tr>
+            <tr#{hideIfSetUp}>
               <th>
                 Day of month<br>
                 <small>We'll try and make sure payments come out <br />on or around this day each month.</small>
