@@ -102,15 +102,7 @@ class GoCardlessController extends LoggedInController
         console.error "Could not find user '#{userId}'"
       return done null, null if err or !user
       @req.models.Payment.find().run (err, payments) =>
-        nextPaymentDate = new Date Date.parse bills[0].created_at
-
-        # Logic copied from banking plugin, needs centralising
-        for roleUser in user.activeRoleUsers ? []
-          if roleUser.role?.meta?.subscriptionRequired
-            if +roleUser.approved < +nextPaymentDate
-              nextPaymentDate = roleUser.approved
-        if +user.meta.paidUntil > +nextPaymentDate
-          nextPaymentDate = new Date Date.parse user.meta.paidUntil
+        nextPaymentDate = @req.models.Payment.getUserPaidUntil user, new Date Date.parse bills[0].created_at
 
         updatedRecords = []
         newRecords = []
