@@ -28,13 +28,14 @@ module.exports =
     if req.method is 'GET' and req.query.signature and req.query.resource_uri and req.query.resource_id and req.query.resource_type is "pre_authorization" and req.query.state is String(loggedInUser.id) and loggedInUser.meta.gocardless
       # This looks like a valid gocardless callback!
       gocardlessClient = require('gocardless')(@get())
-      gocardlessClient.confirmResource req.query, (err, request, body) ->
+      gocardlessClient.confirmResource req.query, (err, request, body) =>
         return callback err if err
         # SUCCESS!
         gocardless = loggedInUser.meta.gocardless ? {}
         gocardless.resource_id = req.query.resource_id
         loggedInUser.setMeta gocardless: gocardless
         loggedInUser.save =>
+          controller.redirectTo "/subscription"
           callback()
     else
       return callback()
