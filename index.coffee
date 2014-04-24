@@ -20,9 +20,10 @@ module.exports =
     done()
 
   setUpGocardlessPayments: (controller, callback) ->
-    controller.data.dom ?= controller.loggedInUser.meta.gocardless?.dayOfMonth ? new Date().getDate() + 1
-    controller.data.monthly ?= controller.loggedInUser.meta.gocardless?.monthly
-    controller.data.initial ?= controller.loggedInUser.meta.gocardless?.initial
+    loggedInUser = controller.loggedInUser
+    controller.data.dom ?= loggedInUser.meta.gocardless?.dayOfMonth ? new Date().getDate() + 1
+    controller.data.monthly ?= loggedInUser.meta.gocardless?.monthly
+    controller.data.initial ?= loggedInUser.meta.gocardless?.initial
     return callback() unless controller.req.method is 'POST' and controller.req.body?.form is "gocardless"
     {dom, monthly, initial} = controller.req.body
     console.log "Charge me £#{initial} up front followed by £#{monthly} per month on the #{dom} day of the month"
@@ -30,25 +31,31 @@ module.exports =
     monthly = parseFloat monthly
     dom = parseInt dom, 10
 
+    min_amount = @get('min_amount') ? 5
     error = false
     if !isFinite(initial) or initial > 500
-      controller.error_initial = "please enter a number of pounds and pence"
+      controller.error_initial = "Please enter a sensible number of pounds and pence"
       error = true
     if !isFinite(monthly) or monthly > 200
-      controller.error_monthly = "please enter a number of pounds and pence"
+      controller.error_monthly = "Please enter a sensible number of pounds and pence"
+      error = true
+    if monthly < min_amount
+      controller.error_monthly = "Minimum monthly payment is £#{min_amount.toFixed(2)}"
       error = true
     if !isFinite(dom) or not (0 < dom < 29)
-      controller.error_dom = "please pick a day of the month"
+      controller.error_dom = "Please pick a day of the month"
       error = true
 
     return callback() if error
+    initial = initial.toFixed(2)
+    monthly = monthly.toFixed(2)
 
-    gocardless = controller.loggedInUser.meta.gocardless ? {}
+    gocardless = loggedInUser.meta.gocardless ? {}
     gocardless.initial = initial
     gocardless.monthly = monthly
     gocardless.dayOfMonth = dom
-    controller.loggedInUser.setMeta gocardless: gocardless
-    controller.loggedInUser.save =>
+    loggedInUser.setMeta gocardless: gocardless
+    loggedInUser.save =>
       callback()
 
   modifyNavigationItems: ({addItem}) ->
