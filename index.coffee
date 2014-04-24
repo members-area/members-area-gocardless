@@ -56,6 +56,50 @@ module.exports =
     gocardless.dayOfMonth = dom
     loggedInUser.setMeta gocardless: gocardless
     loggedInUser.save =>
+      max = @get('max_amount') ? 100
+      if max < initial + monthly
+        max = (initial + monthly) * 1.1
+
+      # Guess at some stuff to prefill for them
+      tmp = loggedInUser.fullname.split(" ")
+      firstName = tmp[0]
+      lastName = tmp[tmp.length-1]
+      address = loggedInUser.address
+      tmp = address.match /[A-Z]{2}[0-9]{1,2}\s*[0-9][A-Z]{2}/i
+      if tmp
+        postcode = tmp[0].toUpperCase()
+        address = address.replace(tmp[0], "")
+      tmp = address.split /[\n\r,]/
+      tmp = tmp.filter (a) -> a.replace(/\s+/g, "").length > 0
+      tmp = tmp.filter (a) -> !a.match /^(hants|hampshire)$/
+      for potentialTown, i in tmp
+        t = potentialTown.replace /[^a-z]/gi, ""
+        if t.match /^(southampton|soton|eastleigh|chandlersford|winchester|northbaddesley|havant|portsmouth|bournemouth|poole|bognorregis|romsey|lyndhurst|eye|warsash|lymington)$/i
+          town = potentialTown
+          tmp.splice i, 1
+          break
+      town ?= "Southampton"
+      if tmp.length > 1
+        address2 = tmp.pop()
+      address1 = tmp.join(", ")
+
+      gocardlessClient = require('gocardless')(@get())
+      url = gocardlessClient.preAuthorization.newUrl
+        max_amount: max
+        interval_length: 1
+        interval_unit: 'month'
+        name: "M#{controller.res.locals.pad(loggedInUser.id, 6)}"
+        description: "#{controller.app.siteSetting.meta.settings.name ? "Members Area"} subscription"
+        user:
+          first_name: firstName
+          last_name: lastName
+          email: loggedInUser.email
+          account_name: loggedInUser.fullname
+          billing_address1: address1
+          billing_address2: address2
+          billing_town: town
+          billing_postcode: postcode
+      controller.redirectTo url
       callback()
 
   modifyNavigationItems: ({addItem}) ->
