@@ -102,7 +102,7 @@ class GoCardlessController extends LoggedInController
         console.error "Could not find user '#{userId}'"
       return done null, null if err or !user
       @req.models.Payment.find().run (err, payments) =>
-        nextPaymentDate = @req.models.Payment.getUserPaidUntil user, new Date Date.parse bills[0].created_at
+        nextPaymentDate = user.getPaidUntil new Date Date.parse bills[0].created_at
 
         updatedRecords = []
         newRecords = []
@@ -132,7 +132,7 @@ class GoCardlessController extends LoggedInController
             newRecords.push payment
             nextPaymentDate = new Date(+nextPaymentDate)
             nextPaymentDate.setMonth(nextPaymentDate.getMonth()+1)
-        user.setMeta paidUntil: nextPaymentDate
+        user.paidUntil = nextPaymentDate
         async.series
           updatePayments: (done) => async.eachSeries updatedRecords, ((r, done) -> r.save done), done
           createPayments: (done) => @req.models.Payment.create newRecords, done

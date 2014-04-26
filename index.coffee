@@ -139,7 +139,7 @@ module.exports =
     $ = cheerio.load(html)
     checked = ""
 
-    paidUntil = controller.req.models.Payment.getUserPaidUntil controller.loggedInUser
+    paidUntil = controller.loggedInUser.paidUntil
     counter = new Date()
     counter.setHours(0)
     counter.setMinutes(0)
