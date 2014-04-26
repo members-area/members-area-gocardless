@@ -1,15 +1,5 @@
 extends /sidebar
 
-mixin formatInput(name, label, placeholder, type)
-  - type = type || "text"
-  .control-group
-    label.control-label(for=name)= label
-    .controls
-      if type == "checkbox"
-        input(type=type, id=name, name=name, checked=data[name])
-      else
-        input(type=type, id=name, name=name, value=data[name], placeholder=placeholder)
-
 block title
   | GoCardless Bills
 
