@@ -1,4 +1,3 @@
-cheerio = require 'members-area/node_modules/cheerio'
 encode = require('members-area/node_modules/entities').encodeXML
 
 module.exports =
@@ -135,8 +134,7 @@ module.exports =
       priority: 53
 
   renderSubscriptionView: (options) ->
-    {controller, html} = options
-    $ = cheerio.load(html)
+    {controller, $} = options
     checked = ""
 
     paidUntil = controller.loggedInUser.paidUntil
@@ -255,5 +253,4 @@ module.exports =
 
       """
     $(".main").append($newNode)
-    options.html = $.html()
     return
