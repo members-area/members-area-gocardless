@@ -6,6 +6,7 @@ module.exports =
     @app.addRoute 'all', '/admin/gocardless/subscriptions', 'members-area-gocardless#gocardless#subscriptions'
     @app.addRoute 'all', '/admin/gocardless/payouts', 'members-area-gocardless#gocardless#payouts'
     @app.addRoute 'all', '/admin/gocardless/bills', 'members-area-gocardless#gocardless#bills'
+    @app.addRoute 'all', '/admin/gocardless/preauths', 'members-area-gocardless#gocardless#preauths'
     @hook 'navigation_items', @modifyNavigationItems.bind(this)
     @hook 'render-payments-subscription-view', @renderSubscriptionView.bind(this)
     paymentsPlugin = @app.getPlugin("members-area-payments")

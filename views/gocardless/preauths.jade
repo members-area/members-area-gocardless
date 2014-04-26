@@ -1,0 +1,16 @@
+extends /sidebar
+
+block title
+  | GoCardless Preauths
+
+block content
+  h2 GoCardless Preauths
+  - var fields = ['created_at', 'name', 'max_amount', 'remaining_amount', 'interval_length', 'interval_unit', 'next_interval_start', 'status']
+  table.table
+    tr
+      each field in fields
+        th= field
+    each preauth in preauthList
+      tr
+        each field in fields
+          td= preauth[field].toString().replace(/T[0-9:]*Z$/, "")

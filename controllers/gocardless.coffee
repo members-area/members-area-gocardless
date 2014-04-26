@@ -7,12 +7,15 @@ class GoCardlessController extends LoggedInController
   @before 'setActiveNagivationId'
   @before 'saveSettings', only: ['admin']
   @before 'getSubscriptions', only: ['subscriptions', 'bills']
+  @before 'getPreauths', only: ['preauths', 'bills']
   @before 'getBills', only: ['bills']
   @before 'reprocess', only: ['bills']
 
   admin: ->
 
   subscriptions: ->
+
+  preauths: ->
 
   payouts: (done) ->
     @client().payout.index (err, res, body) =>
@@ -32,6 +35,11 @@ class GoCardlessController extends LoggedInController
   getSubscriptions: (done) ->
     @client().subscription.index (err, res, body) =>
       @subscriptionList = JSON.parse body
+      done()
+
+  getPreauths: (done) ->
+    @client().preAuthorization.index (err, res, body) =>
+      @preauthList = JSON.parse body
       done()
 
   requireAdmin: (done) ->
