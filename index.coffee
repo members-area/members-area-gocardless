@@ -77,6 +77,7 @@ module.exports =
     gocardless.dayOfMonth = dom
     loggedInUser.setMeta gocardless: gocardless
     loggedInUser.save =>
+      return callback() if gocardless.resource_id # Subscription already set up
       max = @get('max_amount') ? 100
       if max < initial + monthly
         max = (initial + monthly) * 1.1
