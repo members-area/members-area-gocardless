@@ -189,9 +189,12 @@ class GoCardlessController extends LoggedInController
         for bill in bills
           existingPayment = null
           existingPayment = p for p in payments when p.meta.gocardlessBillId is bill.id
+
+          status = @mapStatus(bill.status)
+          amount = Math.round(parseFloat(bill.amount) * 100)
+          periodCount = 1
+
           if existingPayment
-            status = @mapStatus(bill.status)
-            amount = Math.round(parseFloat(bill.amount) * 100)
             if existingPayment.status isnt status or existingPayment.amount isnt amount or existingPayment.user_id isnt userId
               if existingPayment.status isnt status
                 existingPayment.status = status
@@ -209,12 +212,12 @@ class GoCardlessController extends LoggedInController
               user_id: userId
               transaction_id: null
               type: 'GC'
-              amount: parseInt(parseFloat(bill.amount * 100), 10)
-              status: @mapStatus bill.status
+              amount: amount
+              status: status
               include: bill.status not in ['failed', 'cancelled']
               when: new Date Date.parse bill.created_at
               period_from: nextPaymentDate
-              period_count: 1
+              period_count: periodCount
               meta:
                 gocardlessBillId: bill.id
             newRecords.push payment
