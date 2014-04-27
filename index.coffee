@@ -205,7 +205,7 @@ module.exports =
             """
           </tbody>
         </table>
-        <button type="submit" class="btn btn-success btn-large">Set up payments</button>
+        <button type="submit" class="btn btn-success btn-large">#{if isSetUp then "Update payment amount" else "Set up payments"}</button>
       </form>
       <script type="text/javascript">
         (function() {
