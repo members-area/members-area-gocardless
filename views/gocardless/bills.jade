@@ -14,7 +14,7 @@ block content
     each bill in billList
       tr
         each field in fields
-          td= bill[field]
+          td= bill[field].toString().replace(/T[0-9:]+Z$/, "")
         td= (bill.subscription ? bill.subscription.name : "")
 
   h3 Maintenance

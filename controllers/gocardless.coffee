@@ -6,6 +6,8 @@ class GoCardlessController extends LoggedInController
   @before 'requireAdmin'
   @before 'setActiveNagivationId'
   @before 'saveSettings', only: ['admin']
+  @before 'cancelPreauth', only: ['preauths']
+  @before 'getUsers', only: ['preauths', 'bills', 'subscriptions']
   @before 'getSubscriptions', only: ['subscriptions', 'bills']
   @before 'getPreauths', only: ['preauths', 'bills']
   @before 'getBills', only: ['bills']
@@ -35,23 +37,57 @@ class GoCardlessController extends LoggedInController
 
   bills: ->
 
+  cancelPreauth: (done) ->
+    return done() unless @req.method is 'POST' and @req.body.cancel
+    @client().preAuthorization.cancel {id:@req.body.cancel}, (err, res, body) =>
+      try
+        body = JSON.parse body if typeof body is 'string'
+        throw new Error(body.error.join(" \n")) if body.error
+        console.log "Cancelled preauth #{@req.body.cancel}"
+      catch e
+        err ?= e
+      done err
+
+  getUsers: (done) ->
+    @req.models.User.all (err, @users) =>
+      @usersById = {}
+      @usersById[user.id] = user for user in @users
+      done(err)
+
   getBills: (done) ->
     @client().bill.index (err, res, body) =>
-      @billList = JSON.parse body
-      for bill in @billList when bill.source_type is 'subscription'
-        for subscription in @subscriptionList when subscription.id is bill.source_id
-          bill.subscription = subscription
+      try
+        body = JSON.parse body if typeof body is 'string'
+        throw new Error(body.error.join(" \n")) if body.error
+        @billList = body
+        for bill in @billList when bill.source_type is 'subscription'
+          for subscription in @subscriptionList when subscription.id is bill.source_id
+            bill.subscription = subscription
+      catch e
+        err ?= e
       done()
 
   getSubscriptions: (done) ->
     @client().subscription.index (err, res, body) =>
-      @subscriptionList = JSON.parse body
-      done()
+      try
+        body = JSON.parse body if typeof body is 'string'
+        throw new Error(body.error.join(" \n")) if body.error
+        @subscriptionList = body
+      catch e
+        err ?= e
+      done(err)
 
   getPreauths: (done) ->
     @client().preAuthorization.index (err, res, body) =>
-      @preauthList = JSON.parse body
-      done()
+      try
+        body = JSON.parse body if typeof body is 'string'
+        throw new Error(body.error.join(" \n")) if body.error
+        @preauthList = body
+        @preauthList.filter((p) -> p.name.match /^M[0-9]+$/).forEach (preauth) =>
+          preauth.user = @usersById[parseInt(preauth.name.substr(1), 10)]
+      catch e
+        err ?= e
+      done(err)
 
   requireAdmin: (done) ->
     unless @req.user and @req.user.can('admin')
