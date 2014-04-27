@@ -85,6 +85,22 @@ class GoCardlessController extends LoggedInController
         @preauthList = body
         @preauthList.filter((p) -> p.name.match /^M[0-9]+$/).forEach (preauth) =>
           preauth.user = @usersById[parseInt(preauth.name.substr(1), 10)]
+        preauthById = {}
+        preauthById[p.id] = p for p in @preauthList
+        relevantUsers = @users.filter((user) -> user.meta.gocardless?.resource_id)
+        checkPreauth = (user, next) =>
+          preauth = preauthById[user.meta.gocardless.resource_id]
+          if !preauth or preauth.status isnt 'active'
+            console.error "REMOVING USER #{user.id}'s gocardless resource_id"
+            gocardless = user.meta.gocardless
+            delete gocardless.resource_id
+            delete gocardless.paidInitial
+            user.setMeta gocardless: gocardless
+            user.save next
+          else
+            next()
+        async.eachSeries relevantUsers, checkPreauth, done
+        return
       catch e
         err ?= e
       done(err)
