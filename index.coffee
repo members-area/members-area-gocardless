@@ -307,20 +307,17 @@ module.exports =
                 #{if controller.error_monthly then "<p class='text-error'>#{encode controller.error_monthly}</p>" else ""}
               </td>
             </tr>
-            """ + (unless controller.loggedInUser.meta.gocardless?.paidInitial then """
-              <tr>
-                <th>
-                  Initial fee, £<br><small>One-off donation, completely optional.</small><br>
-                  <small>This will be taken out of your account soon.</small>
-                </th>
-                <td>
-                  <input type="text" name="initial" value="#{encode String(controller.data.initial) ? "0"}" id="gocardless_initial"><br>
-                  <small>(Including the GoCardless fee, this will be £<strong id="gocardless_initial_inc">?</strong>)</small>
-                  #{if controller.error_initial then "<p class='text-error'>#{encode controller.error_initial}</p>" else ""}
-                </td>
-              </tr>
-              """ else "") +
-            """
+            <tr#{hideIfSetUp}>
+              <th>
+                Initial fee, £<br><small>One-off donation, completely optional.</small><br>
+                <small>This will be taken out of your account soon.</small>
+              </th>
+              <td>
+                <input type="text" name="initial" value="#{encode String(controller.data.initial) ? "0"}" id="gocardless_initial"><br>
+                <small>(Including the GoCardless fee, this will be £<strong id="gocardless_initial_inc">?</strong>)</small>
+                #{if controller.error_initial then "<p class='text-error'>#{encode controller.error_initial}</p>" else ""}
+              </td>
+            </tr>
           </tbody>
         </table>
         <button type="submit" class="btn btn-success btn-large">#{if isSetUp then "Update payment amount" else "Set up payments"}</button>
