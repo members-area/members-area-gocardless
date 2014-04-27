@@ -123,6 +123,9 @@ module.exports =
                 throw new Error(body.error.join(" \n")) if body.error
               catch e
                 err = e
+              if err
+                console.error "ERROR creating bill in GoCardless"
+                console.dir err
               bill.error = err if err
               next(null, {user, bill})
           @async.mapSeries newBills, createBill, done
