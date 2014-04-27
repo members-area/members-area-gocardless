@@ -10,12 +10,12 @@ block content
     tr
       each field in fields
         th= field
-      th Subscription name
+      th Name
     each bill in billList
       tr
         each field in fields
           td= bill[field].toString().replace(/T[0-9:]+Z$/, "")
-        td= (bill.subscription ? bill.subscription.name : "")
+        td= (bill.subscription || bill.preauth || bill).name
 
   h3 Maintenance
   form(method="post")

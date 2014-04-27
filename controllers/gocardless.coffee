@@ -63,6 +63,9 @@ class GoCardlessController extends LoggedInController
         for bill in @billList when bill.source_type is 'subscription'
           for subscription in @subscriptionList when subscription.id is bill.source_id
             bill.subscription = subscription
+        for bill in @billList when bill.source_type is 'pre_authorization'
+          for preauth in @preauthList when preauth.id is bill.source_id
+            bill.preauth = preauth
       catch e
         err ?= e
       done()
@@ -157,7 +160,7 @@ class GoCardlessController extends LoggedInController
   _reprocess: (done) ->
     paymentsByUser = {}
     regex = /^M(0[0-9]+)$/
-    for bill in @billList when (matches = bill.subscription?.name?.match regex)
+    for bill in @billList when (matches = (bill.subscription ? bill.preauth ? bill).name?.match regex)
       userId = parseInt matches[1], 10
       paymentsByUser[userId] ?= []
       paymentsByUser[userId].push bill
