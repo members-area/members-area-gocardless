@@ -7,6 +7,8 @@ module.exports =
     @app.addRoute 'all', '/admin/gocardless/payouts', 'members-area-gocardless#gocardless#payouts'
     @app.addRoute 'all', '/admin/gocardless/bills', 'members-area-gocardless#gocardless#bills'
     @app.addRoute 'all', '/admin/gocardless/preauths', 'members-area-gocardless#gocardless#preauths'
+    @app.addRoute 'all', '/admin/gocardless/preauths/dr', 'members-area-gocardless#gocardless#dr_preauths'
+    @app.addRoute 'all', '/admin/gocardless/preauths/do', 'members-area-gocardless#gocardless#do_preauths'
     @hook 'navigation_items', @modifyNavigationItems.bind(this)
     @hook 'render-payments-subscription-view', @renderSubscriptionView.bind(this)
     paymentsPlugin = @app.getPlugin("members-area-payments")
@@ -21,6 +23,114 @@ module.exports =
 
     done()
 
+  createNewBills: (options, callback) ->
+    orm.connect process.env.DATABASE_URL, (err, db) =>
+      done = ->
+        db.close()
+        callback.apply this, arguments
+      getModelsForConnection @app, db, (err, models) =>
+        @createNewBillsWithModels(models, options, done)
+
+  createNewBillsWithModels: (models, options, callback) ->
+    if typeof options is 'function'
+      callback = options
+      options = {}
+    @_.defaults options, dryRun: false
+    gocardlessClient = require('gocardless')(@get())
+    results = []
+    @async.auto
+      users: (done) ->
+        models.User.all done
+      preauths: (done) ->
+        gocardlessClient.preAuthorization.index (err, res, body) ->
+          try
+            body = JSON.parse body if typeof body is 'string'
+            throw new Error(body.error.join(" \n")) if body.error
+            body = body.filter (e) -> e.status is 'active'
+          catch e
+            err ?= e
+          done(err, body)
+      bills: (done) ->
+        gocardlessClient.bill.index (err, res, body) ->
+          try
+            body = JSON.parse body if typeof body is 'string'
+            throw new Error(body.error.join(" \n")) if body.error
+          catch e
+            err ?= e
+          # XXX: filter out failed/cancelled bills
+          done(err, body)
+      newBills: ['users', 'preauths', 'bills', (done, {users, preauths, bills}) ->
+        newBills = []
+        usersById = {}
+        usersById[user.id] = user for user in users
+        billByUserId = {}
+        for bill in bills when bill.source_type is 'pre_authorization'
+          bill.preauth = p for p in preauths when p.id is bill.source_id
+          if bill.preauth?.name.match /^M[0-9]+$/
+            user_id = parseInt(bill.preauth.name.substr(1), 10)
+            oldBill = billByUserId[user_id]
+            billByUserId[user_id] = bill if !oldBill or Date.parse(oldBill.created_at) < Date.parse(bill.created_at)
+        today = new Date()
+        today.setHours(0)
+        today.setMinutes(0)
+        today.setSeconds(0)
+        tomorrow = new Date(+today)
+        tomorrow.setDate(tomorrow.getDate()+1)
+        threeWeeksAgo = new Date(+today)
+        threeWeeksAgo.setDate(threeWeeksAgo.getDate() - (7*3))
+        for preauth in preauths when preauth.name.match /^M[0-9]+$/
+          user_id = parseInt(preauth.name.substr(1), 10)
+          bill = billByUserId[user_id]
+          user = usersById[user_id]
+          unless user.meta.gocardless
+            console.error "ERROR: there's a pre-auth configured for user #{user.id} but they have no GoCardless settings!"
+            continue
+          # We only want to make the bill about a week in advance
+          if bill and (bill.status is 'pending' or Date.parse(bill.created_at) > +threeWeeksAgo)
+            # In the interests of self healing, make sure paidInitial is true
+            unless user.meta.gocardless.paidInitial
+              console.error "WARNING: Had to set paidInitial for #{user.id} after the fact"
+              gocardless = user.meta.gocardless
+              gocardless.paidInitial = true
+              user.setMeta gocardless: gocardless
+              user.save ->
+            continue
+          dayPreference = user.meta.gocardless.dayOfMonth
+          billDate = new Date(+tomorrow)
+          billDate.setDate(dayPreference)
+          billDate.setMonth(billDate.getMonth()+1) if +billDate < +tomorrow
+          amount = parseFloat(user.meta.gocardless.monthly)
+          unless user.meta.gocardless.paidInitial
+            amount += parseFloat(user.meta.gocardless.initial)
+          amount *= 1.01 # Add the GoCardless fee
+          bill =
+            pre_authorization_id: preauth.id
+            amount: "#{amount.toFixed(2)}"
+            name: 'Monthly subscription'
+            charge_customer_at: billDate.toISOString().substr(0, 10)
+          newBills.push {user, bill}
+        done(null, newBills)
+      ]
+      createdBills: ['newBills', (done, {newBills}) =>
+        if options.dryRun
+          newBills.dryRun = true
+          done(null, newBills)
+        else
+          createBill = ({user, bill}, next) ->
+            gocardlessClient.bill.create bill, (err, response, body) ->
+              try
+                body = JSON.parse body if typeof body is 'string'
+                throw new Error(body.error.join(" \n")) if body.error
+              catch e
+                err = e
+              bill.error = err if err
+              next(null, {user, bill})
+          @async.mapSeries newBills, createBill, done
+      ]
+
+    , (err, results) ->
+      callback(err, results.createdBills)
+
   gocardlessPaymentsCallback: (controller, callback) ->
     loggedInUser = controller.loggedInUser
 
@@ -29,6 +139,11 @@ module.exports =
       # This looks like a valid gocardless callback!
       gocardlessClient = require('gocardless')(@get())
       gocardlessClient.confirmResource req.query, (err, request, body) =>
+        try
+          body = JSON.parse body if typeof body is 'string'
+          throw new Error(body.error.join(" \n")) if body.error
+        catch e
+          err ?= e
         return callback err if err
         # SUCCESS!
         gocardless = loggedInUser.meta.gocardless ? {}

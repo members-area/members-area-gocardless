@@ -17,6 +17,17 @@ class GoCardlessController extends LoggedInController
 
   preauths: ->
 
+  do_preauths: (done) ->
+    return @redirectTo "/admin/gocardless/preauths/dr" if @req.method isnt 'POST' or @req.body.confirm isnt 'confirm'
+    @plugin.createNewBillsWithModels @req.models, dryRun: false, (@err, @results) =>
+      done()
+
+  dr_preauths: (done) ->
+    @plugin.createNewBillsWithModels @req.models, dryRun: true, (@err, @results) =>
+      @dryRun = true
+      @template = 'do_preauths'
+      done()
+
   payouts: (done) ->
     @client().payout.index (err, res, body) =>
       @payoutList = JSON.parse body
