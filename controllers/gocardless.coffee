@@ -198,6 +198,9 @@ class GoCardlessController extends LoggedInController
                 if bill.status in ['failed', 'cancelled']
                   # Deactiveate bill
                   existingPayment.include = false
+                  # Decrease paidUntil
+                  nextPaymentDate = new Date(+nextPaymentDate)
+                  nextPaymentDate.setMonth(nextPaymentDate.getMonth()-existingPayment.period_count)
               existingPayment.amount = amount
               existingPayment.user_id = userId
               updatedRecords.push existingPayment
@@ -215,8 +218,9 @@ class GoCardlessController extends LoggedInController
               meta:
                 gocardlessBillId: bill.id
             newRecords.push payment
-            nextPaymentDate = new Date(+nextPaymentDate)
-            nextPaymentDate.setMonth(nextPaymentDate.getMonth()+1)
+            if payment.include
+              nextPaymentDate = new Date(+nextPaymentDate)
+              nextPaymentDate.setMonth(nextPaymentDate.getMonth()+1)
         user.paidUntil = nextPaymentDate
         async.series
           updatePayments: (done) => async.eachSeries updatedRecords, ((r, done) -> r.save done), done
