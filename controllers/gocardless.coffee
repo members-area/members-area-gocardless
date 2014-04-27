@@ -172,23 +172,34 @@ class GoCardlessController extends LoggedInController
     bills.sort (a, b) -> Date.parse(a.created_at) - Date.parse(b.created_at)
     return done() unless bills.length
     @req.models.User.get userId, (err, user) =>
+      console.error err if err
       if !user
         console.error "Could not find user '#{userId}'"
       return done null, null if err or !user
       @req.models.Payment.find().run (err, payments) =>
+        console.error err if err
+        if !payments
+          console.error "Could not load payments for '#{userId}'"
+        return done null, null if err or !payments
         nextPaymentDate = user.getPaidUntil new Date Date.parse bills[0].created_at
 
         updatedRecords = []
         newRecords = []
 
         for bill in bills
+          existingPayment = null
           existingPayment = p for p in payments when p.meta.gocardlessBillId is bill.id
           if existingPayment
-            if existingPayment.status != @mapStatus bill.status
-              existingPayment.status = @mapStatus bill.status
-              if bill.status in ['failed', 'cancelled']
-                # Deactiveate bill
-                existingPayment.include = false
+            status = @mapStatus(bill.status)
+            amount = Math.round(parseFloat(bill.amount) * 100)
+            if existingPayment.status isnt status or existingPayment.amount isnt amount or existingPayment.user_id isnt userId
+              if existingPayment.status isnt status
+                existingPayment.status = status
+                if bill.status in ['failed', 'cancelled']
+                  # Deactiveate bill
+                  existingPayment.include = false
+              existingPayment.amount = amount
+              existingPayment.user_id = userId
               updatedRecords.push existingPayment
           else
             payment =
