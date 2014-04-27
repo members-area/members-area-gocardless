@@ -208,6 +208,11 @@ class GoCardlessController extends LoggedInController
               existingPayment.user_id = userId
               updatedRecords.push existingPayment
           else
+            if user.meta.gocardless and !user.meta.gocardless.paidInitial
+              gocardless = user.meta.gocardless
+              periodCount += Math.round(gocardless.initial / gocardless.monthly)
+              gocardless.paidInitial = true
+              user.setMeta gocardless: gocardless
             payment =
               user_id: userId
               transaction_id: null
