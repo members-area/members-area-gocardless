@@ -3,6 +3,7 @@ async = require 'members-area/node_modules/async'
 _ = require 'members-area/node_modules/underscore'
 
 class GoCardlessController extends LoggedInController
+  @callbackTimeout: 240000
   @before 'requireAdmin'
   @before 'setActiveNagivationId'
   @before 'saveSettings', only: ['admin']
