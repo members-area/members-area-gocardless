@@ -191,7 +191,7 @@ class GoCardlessController extends LoggedInController
           existingPayment = p for p in payments when p.meta.gocardlessBillId is bill.id
 
           status = @mapStatus(bill.status)
-          amount = Math.round(parseFloat(bill.amount) * 100)
+          amount = Math.round((parseFloat(bill.amount) - parseFloat(bill.gocardless_fees)) * 100)
           periodCount = 1
 
           if existingPayment
