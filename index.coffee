@@ -302,7 +302,7 @@ module.exports =
             <tr>
               <th>Monthly amount, £</th>
               <td>
-                <input type="text" name="monthly" value="#{encode String(controller.data.monthly) ? "30"}" id="gocardless_monthly"><br>
+                <input type="text" name="monthly" value="#{encode String(controller.data.monthly ? "30")}" id="gocardless_monthly"><br>
                 <small>(Including the GoCardless fee, this will be £<strong id="gocardless_monthly_inc">?</strong>)</small>
                 #{if controller.error_monthly then "<p class='text-error'>#{encode controller.error_monthly}</p>" else ""}
               </td>
@@ -313,7 +313,7 @@ module.exports =
                 <small>This will be taken out of your account soon.</small>
               </th>
               <td>
-                <input type="text" name="initial" value="#{encode String(controller.data.initial) ? "0"}" id="gocardless_initial"><br>
+                <input type="text" name="initial" value="#{encode String(controller.data.initial ? "0")}" id="gocardless_initial"><br>
                 <small>(Including the GoCardless fee, this will be £<strong id="gocardless_initial_inc">?</strong>)</small>
                 #{if controller.error_initial then "<p class='text-error'>#{encode controller.error_initial}</p>" else ""}
               </td>
