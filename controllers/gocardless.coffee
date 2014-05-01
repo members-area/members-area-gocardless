@@ -13,6 +13,7 @@ class GoCardlessController extends LoggedInController
   @before 'getPreauths', only: ['preauths', 'bills']
   @before 'getBills', only: ['bills']
   @before 'reprocess', only: ['bills']
+  @before 'updateSubscriptions', only: ['subscriptions']
 
   admin: ->
 
@@ -80,6 +81,29 @@ class GoCardlessController extends LoggedInController
       catch e
         err ?= e
       done(err)
+
+  updateSubscriptions: (done) ->
+    return done() unless @req.method is 'POST' and @req.body.update is 'update'
+    @update = true
+    subscriptionByUserId = {}
+    subscriptionByUserId[parseInt(s.name.substr(1), 10)] = s for s in @subscriptionList when s.status is 'active'
+    checkUser = (user, next) ->
+      s = subscriptionByUserId[user.id]
+      gc = _.clone user.meta.gocardless ? {}
+      update = ->
+        user.setMeta gocardless: gc
+        user.save next
+      if s
+        s.user = user
+        gc.subscription_resource_id = s.id
+        update()
+      else
+        if gc.subscription_resource_id
+          delete gc.subscription_resource_id
+          update()
+        else
+          next()
+    async.eachSeries @users, checkUser, done
 
   getPreauths: (done) ->
     @client().preAuthorization.index (err, res, body) =>

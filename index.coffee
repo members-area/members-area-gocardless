@@ -269,8 +269,12 @@ module.exports =
     isSetUp = controller.loggedInUser.meta.gocardless?.resource_id?
     hideIfSetUp = " style='display:none'" if isSetUp
     hideIfSetUp ?= ""
+    legacyWarning = ""
+    if controller.loggedInUser.meta.gocardless?.subscription_resource_id?
+      legacyWarning = "<p class='text-warning'>You might have the old GoCardless integration set up. If you want to move over to the new system (recommended) then you should cancel the subscription from the GoCardless control panel.</p>"
     $newNode = $ """
       <h3>GoCardless</h3>
+      #{legacyWarning}
       <p>
         <a href="https://gocardless.com/?r=Z65JVARP&utm_source=website&utm_medium=copy_paste&utm_campaign=referral_scheme_50">GoCardless</a>
         are the next cheapest way to send us money after standing orders/cash.

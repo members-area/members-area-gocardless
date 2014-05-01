@@ -10,7 +10,15 @@ block content
     tr
       each field in fields
         th= field
+      if update
+        th User?
     each subscription in subscriptionList
       tr
         each field in fields
           td= subscription[field]
+        if update
+          td= subscription.user && subscription.user.fullname || "-"
+
+  h3 Maintenance
+  form(method="post")
+    button.btn(type="submit", name="update", value="update") Update users with subscriptions
