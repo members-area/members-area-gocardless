@@ -1,6 +1,6 @@
 {
   "name": "members-area-gocardless",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "GoCardless integration for members area subscriptions.",
   "main": "index.coffee",
   "dependencies": {
