@@ -233,9 +233,10 @@ class GoCardlessController extends LoggedInController
               existingPayment.user_id = userId
               updatedRecords.push existingPayment
           else
-            if user.meta.gocardless and !user.meta.gocardless.paidInitial
+            if user.meta.gocardless
               gocardless = user.meta.gocardless
-              periodCount += Math.round(gocardless.initial / gocardless.monthly)
+              if gocardless.paidInitial? and !gocardless.paidInitial and gocardless.initial > 0 and gocardless.monthly > 0
+                periodCount += Math.round(gocardless.initial / gocardless.monthly)
               gocardless.paidInitial = true
               user.setMeta gocardless: gocardless
             payment =
@@ -253,7 +254,7 @@ class GoCardlessController extends LoggedInController
             newRecords.push payment
             if payment.include
               nextPaymentDate = new Date(+nextPaymentDate)
-              nextPaymentDate.setMonth(nextPaymentDate.getMonth()+1)
+              nextPaymentDate.setMonth(nextPaymentDate.getMonth()+periodCount)
         user.paidUntil = nextPaymentDate
         async.series
           updatePayments: (done) => async.eachSeries updatedRecords, ((r, done) -> r.save done), done
