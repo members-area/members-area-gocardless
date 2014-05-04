@@ -201,7 +201,9 @@ class GoCardlessController extends LoggedInController
       if !user
         console.error "Could not find user '#{userId}'"
       return done null, null if err or !user
-      @req.models.Payment.find().run (err, payments) =>
+      @req.models.Payment.find()
+      .where(type:'GC', user_id: userId)
+      .run (err, payments) =>
         console.error err if err
         if !payments
           console.error "Could not load payments for '#{userId}'"
@@ -211,9 +213,11 @@ class GoCardlessController extends LoggedInController
         updatedRecords = []
         newRecords = []
 
+        paymentsByGocardlessBillId = {}
+        paymentsByGocardlessBillId[p.meta.gocardlessBillId] = p for p in payments when p.meta.gocardlessBillId?
+
         for bill in bills
-          existingPayment = null
-          existingPayment = p for p in payments when p.meta.gocardlessBillId is bill.id
+          existingPayment = paymentsByGocardlessBillId[bill.id]
 
           status = @mapStatus(bill.status)
           amount = Math.round((parseFloat(bill.amount) - parseFloat(bill.gocardless_fees)) * 100)
