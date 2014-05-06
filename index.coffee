@@ -1,5 +1,7 @@
 encode = require('members-area/node_modules/entities').encodeXML
 
+createNewBillsInProgress = false
+
 module.exports =
   initialize: (done) ->
     @app.addRoute 'all', '/admin/gocardless', 'members-area-gocardless#gocardless#admin'
@@ -34,6 +36,17 @@ module.exports =
         @createNewBillsWithModels(models, options, done)
 
   createNewBillsWithModels: (models, options, callback) ->
+    doIt = =>
+      if createNewBillsInProgress
+        setTimeout doIt, 200
+      else
+        createNewBillsInProgress = true
+        @_createNewBillsWithModels models, options, ->
+          createNewBillsInProgress = false
+          callback.apply this, arguments
+    doIt()
+
+  _createNewBillsWithModels: (models, options, callback) ->
     if typeof options is 'function'
       callback = options
       options = {}
