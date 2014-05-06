@@ -21,9 +21,11 @@ module.exports =
       SubscriptionController.before wrapSelf(@gocardlessPaymentsCallback), only: ["view"]
       SubscriptionController.before wrapSelf(@setUpGocardlessPayments), only: ["view"]
 
+    # Automatically create new bills every 24 hours
+    setInterval @createNewBills.bind(this), (24*60*60*1000)
     done()
 
-  createNewBills: (options, callback) ->
+  createNewBills: (options = {}, callback = ->) ->
     orm.connect process.env.DATABASE_URL, (err, db) =>
       done = ->
         db.close()
