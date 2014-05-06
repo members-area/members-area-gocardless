@@ -234,14 +234,14 @@ module.exports =
         cancel_uri: "#{controller.baseURL()}/subscription"
         state: loggedInUser.id
         user:
-          first_name: firstName
-          last_name: lastName
-          email: loggedInUser.email
-          account_name: loggedInUser.fullname
-          billing_address1: address1
-          billing_address2: address2
-          billing_town: town
-          billing_postcode: postcode
+          first_name: firstName ? ""
+          last_name: lastName ? ""
+          email: loggedInUser.email ? ""
+          account_name: loggedInUser.fullname ? ""
+          billing_address1: address1 ? ""
+          billing_address2: address2 ? ""
+          billing_town: town ? ""
+          billing_postcode: postcode ? ""
       controller.redirectTo url
       callback()
 
