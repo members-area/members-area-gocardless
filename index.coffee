@@ -1,4 +1,7 @@
 encode = require('members-area/node_modules/entities').encodeXML
+getModelsForConnection = require('members-area/app/models')
+orm = getModelsForConnection.orm
+Reprocessor = require './reprocessor'
 
 createNewBillsInProgress = false
 
@@ -25,7 +28,25 @@ module.exports =
 
     # Automatically create new bills every 24 hours
     setInterval @createNewBills.bind(this), (24*60*60*1000)
+    # And 12 hours later reprocess the bills
+    setTimeout =>
+      setInterval @reprocess.bind(this), (24*60*60*1000)
+      @reprocess()
+    , (2*60*60*1000)
     done()
+
+  reprocess: ->
+    orm.connect process.env.DATABASE_URL, (err, db) =>
+      getModelsForConnection @app, db, (err, models) =>
+        options =
+          models: models
+          plugin: @
+        reprocessor = new Reprocessor options
+        console.log "[#{new Date().toISOString()}] STARTING AUTOMATIC GOCARDLESS REPROCESSING"
+        reprocessor.reprocess (err) ->
+          console.error err if err
+          console.log "[#{new Date().toISOString()}] AUTOMATIC GOCARDLESS REPROCESSING FINISHED"
+          db.close()
 
   createNewBills: (options = {}, callback = ->) ->
     orm.connect process.env.DATABASE_URL, (err, db) =>
