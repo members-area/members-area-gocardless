@@ -50,9 +50,12 @@ module.exports =
 
   createNewBills: (options = {}, callback = ->) ->
     orm.connect process.env.DATABASE_URL, (err, db) =>
-      done = ->
+      done = (err) ->
+        console.error err if err
+        console.log "[#{new Date().toISOString()}] AUTOMATIC GOCARDLESS BILL CREATION FINISHED"
         db.close()
         callback.apply this, arguments
+      console.log "[#{new Date().toISOString()}] STARTING AUTOMATIC GOCARDLESS BILL CREATION"
       getModelsForConnection @app, db, (err, models) =>
         @createNewBillsWithModels(models, options, done)
 
