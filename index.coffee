@@ -244,23 +244,24 @@ module.exports =
       firstName = tmp[0]
       lastName = tmp[tmp.length-1]
       address = loggedInUser.address
-      tmp = address.match /[A-Z]{2}[0-9]{1,2}\s*[0-9][A-Z]{2}/i
-      if tmp
-        postcode = tmp[0].toUpperCase()
-        address = address.replace(tmp[0], "")
-      tmp = address.split /[\n\r,]/
-      tmp = tmp.filter (a) -> a.replace(/\s+/g, "").length > 0
-      tmp = tmp.filter (a) -> !a.match /^(hants|hampshire)$/
-      for potentialTown, i in tmp
-        t = potentialTown.replace /[^a-z]/gi, ""
-        if t.match /^(southampton|soton|eastleigh|chandlersford|winchester|northbaddesley|havant|portsmouth|bournemouth|poole|bognorregis|romsey|lyndhurst|eye|warsash|lymington)$/i
-          town = potentialTown
-          tmp.splice i, 1
-          break
+      if address?.length
+        tmp = address.match /[A-Z]{2}[0-9]{1,2}\s*[0-9][A-Z]{2}/i
+        if tmp
+          postcode = tmp[0].toUpperCase()
+          address = address.replace(tmp[0], "")
+        tmp = address.split /[\n\r,]/
+        tmp = tmp.filter (a) -> a.replace(/\s+/g, "").length > 0
+        tmp = tmp.filter (a) -> !a.match /^(hants|hampshire)$/
+        for potentialTown, i in tmp
+          t = potentialTown.replace /[^a-z]/gi, ""
+          if t.match /^(southampton|soton|eastleigh|chandlersford|winchester|northbaddesley|havant|portsmouth|bournemouth|poole|bognorregis|romsey|lyndhurst|eye|warsash|lymington)$/i
+            town = potentialTown
+            tmp.splice i, 1
+            break
+        if tmp.length > 1
+          address2 = tmp.pop()
+        address1 = tmp.join(", ")
       town ?= "Southampton"
-      if tmp.length > 1
-        address2 = tmp.pop()
-      address1 = tmp.join(", ")
 
       gocardlessClient = require('gocardless')(@get())
       url = gocardlessClient.preAuthorization.newUrl
