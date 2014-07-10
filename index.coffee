@@ -136,7 +136,7 @@ module.exports =
             continue
           dayPreference = user.meta.gocardless.dayOfMonth
           billDate = new Date(+tomorrow)
-          billDate.setDate(dayPreference)
+          billDate.setDate(parseInt(dayPreference, 10) || 1)
           billDate.setMonth(billDate.getMonth()+1) if +billDate < +tomorrow
           amount = parseFloat(user.meta.gocardless.monthly)
           unless user.meta.gocardless.paidInitial
