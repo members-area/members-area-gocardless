@@ -124,6 +124,10 @@ module.exports =
           unless user.meta.gocardless
             console.error "ERROR: there's a pre-auth configured for user #{user.id} but they have no GoCardless settings!"
             continue
+          amount = parseFloat(user.meta.gocardless.monthly)
+          unless amount > 0
+            console.error "ERROR: user #{user.id} has no configured monthly payment"
+            continue
           # We only want to make the bill about a week in advance
           if bill and (bill.status is 'pending' or Date.parse(bill.created_at) > +threeWeeksAgo)
             # In the interests of self healing, make sure paidInitial is true
@@ -138,7 +142,6 @@ module.exports =
           billDate = new Date(+tomorrow)
           billDate.setDate(parseInt(dayPreference, 10) || 1)
           billDate.setMonth(billDate.getMonth()+1) if +billDate < +tomorrow
-          amount = parseFloat(user.meta.gocardless.monthly)
           unless user.meta.gocardless.paidInitial
             amount += parseFloat(user.meta.gocardless.initial)
           amount *= 1.01 # Add the GoCardless fee
