@@ -103,7 +103,7 @@ module.exports =
         usersById = {}
         usersById[user.id] = user for user in users
         billByUserId = {}
-        for bill in bills when bill.source_type is 'pre_authorization'
+        for bill in bills when bill.source_type is 'pre_authorization' and (bill.status not in ['cancelled', 'failed'])
           bill.preauth = p for p in preauths when p.id is bill.source_id
           if bill.preauth?.name.match /^M[0-9]+$/
             user_id = parseInt(bill.preauth.name.substr(1), 10)
