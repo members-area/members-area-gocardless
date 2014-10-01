@@ -117,6 +117,8 @@ module.exports =
         tomorrow.setDate(tomorrow.getDate()+1)
         threeWeeksAgo = new Date(+today)
         threeWeeksAgo.setDate(threeWeeksAgo.getDate() - (7*3))
+        oneWeekHence = new Date(+today)
+        oneWeekHence.setDate(oneWeekHence.getDate() + 7)
         for preauth in preauths when preauth.name.match /^M[0-9]+$/
           user_id = parseInt(preauth.name.substr(1), 10)
           bill = billByUserId[user_id]
@@ -142,6 +144,7 @@ module.exports =
           billDate = new Date(+tomorrow)
           billDate.setDate(parseInt(dayPreference, 10) || 1)
           billDate.setMonth(billDate.getMonth()+1) if +billDate < +tomorrow
+          continue if +billDate > +oneWeekHence
           unless user.meta.gocardless.paidInitial
             amount += parseFloat(user.meta.gocardless.initial)
           amount *= 1.01 # Add the GoCardless fee
