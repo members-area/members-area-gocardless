@@ -242,8 +242,8 @@ module.exports =
     loggedInUser.save =>
       return callback() if gocardless.resource_id # Subscription already set up
       max = @get('max_amount') ? 100
-      if max < initial + monthly
-        max = (initial + monthly) * 1.1
+      if max < parseFloat(initial) + parseFloat(monthly)
+        max = (parseFloat(initial) + parseFloat(monthly)) * 1.1
 
       # Guess at some stuff to prefill for them
       tmp = loggedInUser.fullname.split(" ")
